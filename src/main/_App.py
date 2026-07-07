@@ -1,4 +1,6 @@
-# mainloop apenas
+from interface import Aplicacao
+
 
 if __name__ == "__main__":
-    pass
+    app = Aplicacao()
+    app.mainloop()

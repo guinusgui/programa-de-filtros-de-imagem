@@ -75,9 +75,14 @@ class Imagem:
         if entrada.startswith("http://") or entrada.startswith("https://"):
             self.caminho_local = Download.baixar_imagem(entrada)
         else:
-            self.caminho_local = entrada
+            self.caminho_local = self._resolver_caminho_local(entrada)
             
         self._validar_arquivo()
+
+    def _resolver_caminho_local(self, entrada: str) -> str:
+        if os.path.isabs(entrada):
+            return os.path.abspath(entrada)
+        return os.path.abspath(os.path.join(os.getcwd(), entrada))
 
     def _validar_arquivo(self):
         if not os.path.exists(self.caminho_local):
