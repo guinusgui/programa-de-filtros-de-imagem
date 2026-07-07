@@ -11,10 +11,7 @@ class Download:
 
     @staticmethod
     def baixar_imagem(url: str, diretorio_destino: str = "."):
-        """
-        Faz o download da imagem a partir de uma URL e a salva localmente.
-        Retorna o caminho do arquivo salvo.
-        """
+        
         print("Iniciando o download da imagem...")
         try:
             
@@ -60,10 +57,7 @@ class Download:
 
 
 class Imagem:
-    """
-    Representa o arquivo de imagem que será processado pelo programa.
-    Garante que o arquivo seja local e tenha a extensão correta.
-    """
+    
     def __init__(self, caminho_ou_url: str):
         self._entrada_usuario = caminho_ou_url
         self.caminho_local = None
