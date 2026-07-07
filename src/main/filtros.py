@@ -161,7 +161,6 @@ class FiltroBlurred(FiltroBase):
         """
         imagem_rgb = imagem.convert("RGB")
 
-        # O Kernel é uma matriz 3x3 que vai deslizar por toda a imagem.
         # Aqui, colocamos o peso 1 para o pixel central e todos os seus 8 vizinhos.
         # kernel_desfoque = ImageFilter.Kernel(
         #     size=(3, 3),
@@ -232,14 +231,14 @@ class FiltroContorno(FiltroBase):
         
         return imagem_contorno
     
-class FiltroCartoon():
+class FiltroCartoon(FiltroBase):
     """
-        Uma imagem catoonizada é, sobretudo, uma imagem com menos detalhes.
+        Uma imagem cartoonizada é, sobretudo, uma imagem com menos detalhes.
         
-        Uma características são cores chapadas. Para isso, a imagem será suavizada para reduzir seus detalhes. Então,
+        Uma característica são cores chapadas. Para isso, a imagem será suavizada para reduzir seus detalhes. Então,
         será aplicado uma quantização - clusterização k-means - para reduzir a diversidade de cor e atingir o efeito desejado.
 
-        Outro caractere são as bordas bem definidas. Para isso, serão identificadas as bordas da imagem
+        Outro caractere são as bordas bem definidas. Para isso, serão identificadas as bordas da imagem.
         Essas serão binarizadas visando o efeito chapado e aplicadas sobre a imagem quantizada.
     """
 

@@ -5,6 +5,7 @@ from PIL import Image, ImageTk
 from filtros import (
     Imagem,
     FiltroBlurred,
+    FiltroCartoon,
     FiltroContorno,
     FiltroEscalaDeCinza,
     FiltroNegativo,
@@ -807,6 +808,7 @@ FILTROS = [
     (FiltroNegativo, "Negativo"),
     (FiltroBlurred, "Desfoque"),
     (FiltroContorno, "Contorno"),
+    (FiltroCartoon, "Cartoon"),
 ]
 
 
