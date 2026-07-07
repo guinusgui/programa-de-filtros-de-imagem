@@ -1,8 +1,96 @@
+import os
 import tkinter as tk
 import numpy as np
+import requests
 from tkinter import messagebox
-from PIL import Image, ImageTk, ImageOps,ImageFilter
+from PIL import Image, ImageTk, ImageOps
 from abc import ABC, abstractmethod
+from urllib.parse import urlparse
+
+class Download:
+
+    @staticmethod
+    def baixar_imagem(url: str, diretorio_destino: str = "."):
+        """
+        Faz o download da imagem a partir de uma URL e a salva localmente.
+        Retorna o caminho do arquivo salvo.
+        """
+        print("Iniciando o download da imagem...")
+        try:
+            
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            }
+            
+            resposta = requests.get(url, headers=headers, timeout=15)
+            resposta.raise_for_status() 
+            
+            # descobrir o nome original do arquivo pela URL
+            caminho_url = urlparse(url).path
+            nome_arquivo = os.path.basename(caminho_url)
+            
+            # lê o cabeçalho do arquivo caso pela URL não dê certo
+            tipo_conteudo = resposta.headers.get('Content-Type', '').lower()
+            
+            if not (nome_arquivo.lower().endswith('.jpg') or nome_arquivo.lower().endswith('.png') or nome_arquivo.lower().endswith('.jpeg')):
+                if 'jpeg' in tipo_conteudo or 'jpg' in tipo_conteudo:
+                    nome_arquivo = "imagem_baixada.jpg"
+                elif 'png' in tipo_conteudo:
+                    nome_arquivo = "imagem_baixada.png"
+                else:
+                    raise ValueError("A URL fornecida não aponta para uma imagem .jpg ou .png válida.")
+            
+            caminho_completo = os.path.join(diretorio_destino, nome_arquivo)
+            
+
+            with open(caminho_completo, 'wb') as arquivo:
+                arquivo.write(resposta.content)
+                
+            print(f" Download concluído! Arquivo salvo em: {caminho_completo}")
+            return caminho_completo
+            
+        except requests.exceptions.MissingSchema:
+            raise ValueError("URL inválida. Certifique-se de incluir 'http://' ou 'https://'.")
+        except requests.exceptions.ConnectionError:
+            raise ConnectionError("Erro de conexão. Verifique sua internet ou se a URL está no ar.")
+        except requests.exceptions.HTTPError as e:
+            raise RuntimeError(f"O servidor recusou o acesso (Erro HTTP {resposta.status_code}).")
+        except requests.exceptions.RequestException as e:
+            raise RuntimeError(f"Erro inesperado ao acessar a URL: {e}")
+
+
+class Imagem:
+    """
+    Representa o arquivo de imagem que será processado pelo programa.
+    Garante que o arquivo seja local e tenha a extensão correta.
+    """
+    def __init__(self, caminho_ou_url: str):
+        self._entrada_usuario = caminho_ou_url
+        self.caminho_local = None
+        self._preparar_imagem()
+
+    def _preparar_imagem(self):
+        entrada = self._entrada_usuario.strip()
+        
+        if entrada.startswith("http://") or entrada.startswith("https://"):
+            self.caminho_local = Download.baixar_imagem(entrada)
+        else:
+            self.caminho_local = entrada
+            
+        self._validar_arquivo()
+
+    def _validar_arquivo(self):
+        if not os.path.exists(self.caminho_local):
+            raise FileNotFoundError(f"O arquivo '{self.caminho_local}' não foi encontrado no diretório local.")
+            
+        _, extensao = os.path.splitext(self.caminho_local.lower())
+        
+        if extensao not in ['.jpg', '.jpeg', '.png']:
+            raise ValueError(f"Formato '{extensao}' inválido. O programa aceita apenas imagens .jpg, .jpeg ou .png.")
+            
+    def get_caminho(self) -> str:
+        return self.caminho_local
+
 
 class FiltroBase(ABC):
     #CLasse Abstrata para indicar o método "aplicar", presente em todas as classes filtro.
