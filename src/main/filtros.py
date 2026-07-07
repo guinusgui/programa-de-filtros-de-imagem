@@ -1,7 +1,7 @@
 import tkinter as tk
 import numpy as np
 from tkinter import messagebox
-from PIL import Image, ImageTk, ImageOps
+from PIL import Image, ImageTk, ImageOps,ImageFilter
 from abc import ABC, abstractmethod
 
 class FiltroBase(ABC):
