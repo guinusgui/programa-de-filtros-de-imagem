@@ -1,6 +1,7 @@
 import os
 import tkinter as tk
 import numpy as np
+import cv2
 import requests
 from tkinter import messagebox
 from PIL import Image, ImageTk, ImageOps, ImageFilter
@@ -96,7 +97,7 @@ class FiltroBase(ABC):
     #CLasse Abstrata para indicar o método "aplicar", presente em todas as classes filtro.
     @abstractmethod
     def aplicar(self, imagem: Image.Image) -> Image.Image:
-        pass
+        raise NotImplementedError
     def converter(self, imagem: Image.Image) -> ImageTk.PhotoImage:
         return ImageTk.PhotoImage(imagem)
     def salvar(self, imagem: Image.Image, caminho: str) -> None:
@@ -122,8 +123,6 @@ class FiltroBase(ABC):
             raise ValueError("Formato de arquivo inválido.") from None
         except OSError as erro:
             raise OSError(f"Não foi possivel salvar a imagem. Detalhes: {erro}") from erro
-
-    
 
 class FiltroEscalaDeCinza(FiltroBase):
     def aplicar(self, imagem: Image.Image) -> Image.Image:
@@ -233,5 +232,58 @@ class FiltroContorno(FiltroBase):
         imagem_contorno = imagem_cinza_pil.filter(kernel_bordas)
         
         return imagem_contorno
-     
- 
+    
+class FiltroCartoon():
+    """
+        Uma imagem catoonizada é, sobretudo, uma imagem com menos detalhes.
+        
+        Uma características são cores chapadas. Para isso, a imagem será suavizada para reduzir seus detalhes. Então,
+        será aplicado uma quantização - clusterização k-means - para reduzir a diversidade de cor e atingir o efeito desejado.
+
+        Outro caractere são as bordas bem definidas. Para isso, serão identificadas as bordas da imagem
+        Essas serão binarizadas visando o efeito chapado e aplicadas sobre a imagem quantizada.
+    """
+
+    def __init__(self,
+                 gaussianKernel=3,
+                 k=16,
+                 maxIt=10
+                 ):
+        self.gaussianKernel = gaussianKernel
+        self.k = k
+        self.maxIt = maxIt
+
+        self.kMeansCriteria = ( cv2.TERM_CRITERIA_MAX_ITER, self.maxIt, None) 
+
+    def aplicar(self, imagem: Image.Image) -> Image.Image:
+        img = np.array(imagem.convert("RGB"))
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+
+        # Suavização ---
+        img_blur = cv2.GaussianBlur(img, (self.gaussianKernel, self.gaussianKernel), 0)
+
+        # Cores Chapadas por K-Means ---
+        flatten = np.float32(img.reshape(-1, 3))
+        
+        _, classificacoes, centroides = cv2.kmeans(flatten, self.k, None, self.kMeansCriteria, 10, cv2.KMEANS_RANDOM_CENTERS) 
+        centroides = np.uint8(centroides) 
+        segmented_data = centroides[classificacoes.flatten()] 
+        coresQuantizadas = segmented_data.reshape((img.shape))
+
+        # Bordas bem definidas ---
+        bordas = cv2.Canny(img_blur, 100, 65)
+
+        _, bordas = cv2.threshold(
+            bordas,
+            0,
+            255,
+            cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU
+        )
+
+        # Unindo cores chapadas com bordas ---
+        bordas = cv2.cvtColor(bordas, cv2.COLOR_GRAY2BGR)
+        cartoon = cv2.bitwise_and(coresQuantizadas, bordas)
+
+        # Convertendo para PIL ---
+        cartoon = cv2.cvtColor(cartoon, cv2.COLOR_BGR2RGB)
+        return Image.fromarray(cartoon)
