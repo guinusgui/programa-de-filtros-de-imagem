@@ -3,7 +3,7 @@ import tkinter as tk
 import numpy as np
 import requests
 from tkinter import messagebox
-from PIL import Image, ImageTk, ImageOps
+from PIL import Image, ImageTk, ImageOps, ImageFilter
 from abc import ABC, abstractmethod
 from urllib.parse import urlparse
 
